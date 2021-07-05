@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TrainConfigurator
@@ -7,7 +7,7 @@ namespace TrainConfigurator
     {
         static void ShowMenu()
         {
-            Console.WriteLine("1 - Создать напрвление.");
+            Console.WriteLine("1 - Создать направление.");
             Console.WriteLine("2 - Продать билеты.");
             Console.WriteLine("3 - Сформировать поезд.");
             Console.WriteLine("4 - Отправить поезд.");
@@ -18,6 +18,7 @@ namespace TrainConfigurator
         {
             Console.WriteLine("Нажмите на любую клавишу, чтобы продолжить...");
             Console.ReadKey();
+            Console.Clear();
         }
 
         static void Main(string[] args)
@@ -47,28 +48,13 @@ namespace TrainConfigurator
                     switch (choice)
                     {
                         case 1:
-                            Console.WriteLine("Введите точку отправления: ");
-                            string cityFrom = Console.ReadLine();
-                            Console.WriteLine("Введите точку прибытия: ");
-                            string cityWhere = Console.ReadLine();
-                            trip.SetDirection(cityFrom, cityWhere);
+                            trip.EnterDirection();
                             break;
                         case 2:
                             trip.SellTickets();
                             break;
                         case 3:
-                            Console.WriteLine("Введите количество вагонов (минимум 3, максимум 10)");
-                            int carriagesCount = InputChecker.MakeChoice(3, 10);
-                            trip.Train.AddCarriages(carriagesCount);
-                            int missingSeatsCount = trip.PassengersCount - trip.Train.GetAmountCapacity();
-                            while (missingSeatsCount > 0)
-                            {
-                                Console.WriteLine($"Не хватает {missingSeatsCount} мест. Необходимо добавить ещё.");
-                                Console.WriteLine("Введите количество вагонов (минимум 1, максимум 10)");
-                                carriagesCount = InputChecker.MakeChoice(1, 10);
-                                trip.Train.AddCarriages(carriagesCount);
-                                missingSeatsCount = trip.PassengersCount - trip.Train.GetAmountCapacity();
-                            }
+                            trip.EnterTrainInfo();
                             trip.Train.SeatPassengers(trip.PassengersCount);
                             break;
                         case 4:
@@ -83,8 +69,7 @@ namespace TrainConfigurator
                     }
                     choiceCounter++;
                 }   
-                TapToCountinue();
-                Console.Clear();
+                TapToCountinue(); 
             }
         }
     }
@@ -149,6 +134,31 @@ namespace TrainConfigurator
             _passengersCount = 0;
         }
 
+        public void EnterDirection()
+        {
+            Console.WriteLine("Введите точку отправления: ");
+            string cityFrom = Console.ReadLine();
+            Console.WriteLine("Введите точку прибытия: ");
+            string cityWhere = Console.ReadLine();
+            SetDirection(cityFrom, cityWhere);
+        }
+
+        public void EnterTrainInfo()
+        {
+            Console.WriteLine($"Введите количество вагонов (минимум {Train.MinCarriagesAdd}, максимум {Train.MaxCarriagesAdd})");
+            int carriagesCount = InputChecker.MakeChoice(Train.MinCarriagesAdd, Train.MaxCarriagesAdd);
+            Train.AddCarriages(carriagesCount);
+            int missingSeatsCount = PassengersCount - Train.GetAmountCapacity();
+            while (missingSeatsCount > 0)
+            {
+                Console.WriteLine($"Не хватает {missingSeatsCount} мест. Необходимо добавить ещё.");
+                Console.WriteLine($"Введите количество вагонов (минимум 1, максимум {Train.MaxCarriagesAdd})");
+                carriagesCount = InputChecker.MakeChoice(1, Train.MaxCarriagesAdd);
+                Train.AddCarriages(carriagesCount);
+                missingSeatsCount = PassengersCount - Train.GetAmountCapacity();
+            }
+        }
+
         public void SendTrain()
         {
             Console.WriteLine("Поезд успешно отправлен!");
@@ -193,7 +203,12 @@ namespace TrainConfigurator
 
     class Train
     {
+        private const int _minCarriagesAdd = 3;
+        private const int _maxCarriagesAdd = 10;
         private List<Carriage> _carriages;
+
+        public static int MinCarriagesAdd => _minCarriagesAdd;
+        public static int MaxCarriagesAdd => _maxCarriagesAdd;
 
         public Train()
         {
@@ -208,11 +223,11 @@ namespace TrainConfigurator
         public void AddCarriages(int countToAdd)
         {
             int capacity;
-            Console.WriteLine("Вместимость вагона от 10 до 20 мест.");
+            Console.WriteLine($"Вместимость вагона от {Carriage.MinSeatsNumber} до {Carriage.MaxSeatsNumber} мест.");
             for (int i = 0; i < countToAdd; i++)
             {
                 Console.Write($"Введите количество мест {_carriages.Count + 1} - ого вагона: ");
-                capacity = InputChecker.MakeChoice(10, 20);
+                capacity = InputChecker.MakeChoice(Carriage.MinSeatsNumber, Carriage.MaxSeatsNumber);
                 AddCarriage(capacity);
             }
         }
@@ -251,7 +266,6 @@ namespace TrainConfigurator
 
         public void ShowInfo()
         {
-          
             if (_carriages.Count != 0)
             {
                 Console.WriteLine($"Количество вагонов = {_carriages.Count}. Информация о вагонах:");
@@ -273,10 +287,14 @@ namespace TrainConfigurator
         private int _capacity;
         private int _freePlacesCount;
         private int _number;
+        private const int _minSeatsNumber = 10;
+        private const int _maxSeatsNumber = 20;
 
         public int Capacity { get => _capacity; }
         public int FreePlacesCount { get => _freePlacesCount; }
         public int Number { get => _number; }
+        public static int MinSeatsNumber => _minSeatsNumber;
+        public static int MaxSeatsNumber => _maxSeatsNumber;
 
         public Carriage(int capacity, int number)
         {
