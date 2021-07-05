@@ -5,7 +5,7 @@ namespace TrainConfigurator
 {
     class Program
     {
-        static public void ShowMenu()
+        static void ShowMenu()
         {
             Console.WriteLine("1 - Создать напрвление.");
             Console.WriteLine("2 - Продать билеты.");
@@ -14,7 +14,7 @@ namespace TrainConfigurator
             Console.WriteLine("5 - Выход из программы.");
         }
 
-        static void TabToCountinue()
+        static void TapToCountinue()
         {
             Console.WriteLine("Нажмите на любую клавишу, чтобы продолжить...");
             Console.ReadKey();
@@ -38,36 +38,52 @@ namespace TrainConfigurator
                 ShowMenu();
                 Console.WriteLine();
                 choice = InputChecker.MakeChoice(5);
-                if (choiceCounter != choice)
+                if (choiceCounter != choice && choice != 5)
                 {
                     Console.WriteLine($"Следующий пункт, который необходимо сделать {choiceCounter}.");
-                    TabToCountinue();
-                    Console.Clear();
-                    continue;
                 }
-                switch (choice)
+                else
                 {
-                    case 1:
-                        trip.SetDirection();
-                        break;
-                    case 2:
-                        trip.SellTickets();
-                        break;
-                    case 3:
-                        trip.SetTrain();
-                        break;
-                    case 4:
-                        trip.SendTrain();
-                        choiceCounter = 1;
-                        break;
-                    case 5:
-                        exit = true;
-                        break;
-                    default:
-                        break;
-                }
-                choiceCounter++;
-                TabToCountinue();
+                    switch (choice)
+                    {
+                        case 1:
+                            Console.WriteLine("Введите точку отправления: ");
+                            string cityFrom = Console.ReadLine();
+                            Console.WriteLine("Введите точку прибытия: ");
+                            string cityWhere = Console.ReadLine();
+                            trip.SetDirection(cityFrom, cityWhere);
+                            break;
+                        case 2:
+                            trip.SellTickets();
+                            break;
+                        case 3:
+                            Console.WriteLine("Введите количество вагонов (минимум 3, максимум 10)");
+                            int carriagesCount = InputChecker.MakeChoice(3, 10);
+                            trip.Train.AddCarriages(carriagesCount);
+                            int missingSeatsCount = trip.PassengersCount - trip.Train.GetAmountCapacity();
+                            while (missingSeatsCount > 0)
+                            {
+                                Console.WriteLine($"Не хватает {missingSeatsCount} мест. Необходимо добавить ещё.");
+                                Console.WriteLine("Введите количество вагонов (минимум 1, максимум 10)");
+                                carriagesCount = InputChecker.MakeChoice(1, 10);
+                                trip.Train.AddCarriages(carriagesCount);
+                                missingSeatsCount = trip.PassengersCount - trip.Train.GetAmountCapacity();
+                            }
+                            trip.Train.SeatPassengers(trip.PassengersCount);
+                            break;
+                        case 4:
+                            trip.SendTrain();
+                            choiceCounter = 1;
+                            break;
+                        case 5:
+                            exit = true;
+                            break;
+                        default:
+                            break;
+                    }
+                    choiceCounter++;
+                }   
+                TapToCountinue();
                 Console.Clear();
             }
         }
@@ -107,26 +123,6 @@ namespace TrainConfigurator
             }
             return choice;
         }
-
-
-        public static string ReadCity()
-        {
-            string city = "";
-            bool exit = false;
-            while (exit == false)
-            {
-                city = Console.ReadLine();
-                if (city.Length < 3)
-                {
-                    Console.WriteLine("Неверный ввод, повторите попытку: ");
-                }
-                else
-                {
-                    exit = true;
-                }
-            }
-            return city;
-        }
     }
 
     class Trip
@@ -136,7 +132,7 @@ namespace TrainConfigurator
         private int _passengersCount;
 
         public string Direction { get => _direction;  }
-        public int PassengersCount { get => _passengersCount;  }
+        public int PassengersCount { get => _passengersCount; }
         public Train Train { get => _train; }
 
         public Trip()
@@ -148,7 +144,7 @@ namespace TrainConfigurator
 
         public void Clear()
         {
-            _train.Clear();
+            Train.Clear();
             _direction = "";
             _passengersCount = 0;
         }
@@ -166,29 +162,9 @@ namespace TrainConfigurator
             Console.WriteLine($"Билеты успешно проданы. Количество пассажиров = {_passengersCount}");
         }
 
-        public void SetDirection()
+        public void SetDirection(string cityFrom, string cityWhere)
         {
-            Console.WriteLine("Введите точку отправления: ");
-            string cityFrom = InputChecker.ReadCity();
-            Console.WriteLine("Введите точку прибытия: ");
-            string cityWhere = InputChecker.ReadCity();
             _direction = cityFrom + " - " + cityWhere;
-        }
-
-        public Train SetTrain()
-        {
-            Console.WriteLine("Введите количество вагонов (минимум 3, максимум 10)");
-            int carriagesCount = InputChecker.MakeChoice(3, 10);
-            _train.AddCarriages(carriagesCount);
-            while(_passengersCount > _train.GetAmountCapacity())
-            {
-                Console.WriteLine($"Не хватает {_passengersCount - Train.GetAmountCapacity()} мест. Необхадимо добавить ещё.");
-                Console.WriteLine("Введите количество вагонов (минимум 1, максимум 10)");
-                carriagesCount = InputChecker.MakeChoice(1, 10);
-                _train.AddCarriages(carriagesCount);
-            }
-            _train.SeatPassengers(_passengersCount);
-            return _train;
         }
 
         public void ShowInfo()
@@ -211,15 +187,13 @@ namespace TrainConfigurator
                 Console.WriteLine($"Билеты не куплены!");
                 return;
             }
-            _train.ShowInfo();
+            Train.ShowInfo();
         }
     }
 
     class Train
     {
         private List<Carriage> _carriages;
-
-        public List<Carriage> Carriages { get => _carriages; }
 
         public Train()
         {
@@ -265,11 +239,11 @@ namespace TrainConfigurator
             for (int i = 0; i < passengersCount; i++)
             {
                 randomNumber = rand.Next(1, _carriages.Count);
-                bool result = Carriages[randomNumber].AddPassengers(1);
+                bool result = _carriages[randomNumber].AddPassengers(1);
                 while (result == false)
                 {
                     randomNumber = (randomNumber + 1) % _carriages.Count;
-                    result = Carriages[randomNumber].AddPassengers(1);
+                    result = _carriages[randomNumber].AddPassengers(1);
                 }
             }
             Console.WriteLine("Пассажиры успешно распределены!");
@@ -282,9 +256,9 @@ namespace TrainConfigurator
             {
                 Console.WriteLine($"Количество вагонов = {_carriages.Count}. Информация о вагонах:");
                 Console.WriteLine("Номер\tВместимость\tКол-во свободных мест");
-                for (int i = 0; i < Carriages.Count; i++)
+                for (int i = 0; i < _carriages.Count; i++)
                 {
-                    Carriages[i].ShowInfoAsTable();
+                    _carriages[i].ShowInfoAsTable();
                 }
             }
             else
