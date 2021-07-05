@@ -28,16 +28,8 @@ namespace TrainConfigurator
             Trip trip = new Trip();
             while (exit == false)
             {
-                if (trip.Direction != "")
-                {
-                    trip.ShowInfo();
-                }
-                else
-                {
-                    Console.WriteLine("Поезд не создан");
-                }
+                trip.ShowInfo();
                 ShowMenu();
-                Console.WriteLine();
                 choice = InputChecker.MakeChoice(5);
                 if (choiceCounter != choice && choice != 5)
                 {
@@ -198,6 +190,7 @@ namespace TrainConfigurator
                 return;
             }
             Train.ShowInfo();
+            Console.WriteLine();
         }
     }
 
@@ -253,7 +246,7 @@ namespace TrainConfigurator
             Random rand = new Random();
             for (int i = 0; i < passengersCount; i++)
             {
-                randomNumber = rand.Next(1, _carriages.Count);
+                randomNumber = rand.Next(0, _carriages.Count);
                 bool result = _carriages[randomNumber].AddPassengers(1);
                 while (result == false)
                 {
